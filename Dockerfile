@@ -12,7 +12,8 @@ RUN printf "deb http://archive.debian.org/debian/ jessie main\ndeb-src http://ar
     python \
     python-pip \
     libpq-dev \
-    libgdal1h libgeos-c1 libmapserver1\
+    libpoppler46 libstdc++6 proj-bin \
+    libgdal1h libgeos-c1 libmapserver1 \
     python-mapscript && \
   apt-get autoremove -y && \
   apt-get clean && \

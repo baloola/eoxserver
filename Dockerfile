@@ -6,8 +6,7 @@ ADD eoxserver /opt/eoxserver/eoxserver
 ADD tools /opt/eoxserver/tools
 ADD setup.cfg setup.py MANIFEST.in README.rst requirements.txt /opt/eoxserver/
 
-RUN apt-get install -y \
-  apt-transport-https && \
+RUN printf "deb http://archive.debian.org/debian/ jessie main\ndeb-src http://archive.debian.org/debian/ jessie main\ndeb http://security.debian.org jessie/updates main\ndeb-src http://security.debian.org jessie/updates main" > /etc/apt/sources.list && \
   apt-get update && \
   apt-get install -y \
   apt-transport-https \

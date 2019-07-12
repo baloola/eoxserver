@@ -1,39 +1,60 @@
+Skip to content
+ 
+Search or jump to…
+
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@baloola 
+7
+7 2 EOX-A/ngeo-b
+ Code  Issues 8  Pull requests 0  Projects 0  Wiki  Security  Insights
+ngeo-b/.travis.yml
+@Schpidi Schpidi Fix test command.
+eef9878 on May 22
+@constantinius @Schpidi
+30 lines (23 sloc)  1.82 KB
+  
 language: python
-env:
-- DOCKER_COMPOSE_VERSION: 1.8.0
-python:
-- '2.7'
+
+services:
+- docker
+
 before_install:
-  - sudo apt-get update
-# Now we can install the newer docker-engine which is required for the newer
-  # docker-composer we will install next. The messy options are to force it to
-  # be non-interactive (normally it asks you a bunch of config questions).
-  - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
-# Print out the current docker-compose version. Once this reports 1.6+ then we
-  # do not need the following steps.
-  - docker-compose --version
-# As of the writing of this script Travis has docker-compose v1.4.2, we need
-  # to update it to 1.8+. $DOCKER_COMPOSE_VERSION is provide from the `env`
-  # above.
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L 
-https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-# Check that docker-compose is now running the latest version (or at least the
-  # one we specified). This is not to be confused with the version we printed
-  # before doing the update.
-  - docker-compose --version
-# Setup your application stack. You may need to tweak these commands if you
-  # doing out-of-the-ordinary docker-compose builds.
-  - docker-compose pull
-  - docker-compose build
-  - docker-compose start
-# You will want this for logging. If one of your containers does not build for
-  # whatever reason it's best to report that now before your tests start
-  # otherwise it can be really tricky to debug why tests are failing sometimes.
-  - docker ps
-# This is just our script to setup all the database tables and other fixtures
-  # we need. You should remove this if it's not necessary or you have other
-  # scripts handling this.
-  - docker/web/provision.sh
+- cd install
+- docker build . -t browse-server --add-host=browse:127.0.0.1
+
+script:
+- docker run -it --rm --name test-browse-server -p 8081:80 -v "${PWD}/../ngeo_browse_server/":/usr/lib/python2.6/site-packages/ngeo_browse_server/ -v "${PWD}/../ngeo-b_autotest/data/":/var/www/ngeo/ngeo_browse_server_instance/ngeo_browse_server_instance/data/ -v "${PWD}/../ngeo-b_autotest/logs/":/var/www/ngeo/ngeo_browse_server_instance/ngeo_browse_server_instance/logs/ --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 browse-server /bin/bash -c "/etc/init.d/postgresql start && sleep 5 && /etc/init.d/memcached start && echo \"TEST_RUNNER = 'eoxserver.testing.core.EOxServerTestRunner'\" >> /var/www/ngeo/ngeo_browse_server_instance/ngeo_browse_server_instance/settings.py && python /var/www/ngeo/ngeo_browse_server_instance/manage.py test 'control|IngestModelInGeotiffBrowseOnSwift,SeedModelInGeotiffBrowseOnSwift,IngestFootprintBrowseReplaceOnSwift,IngestFootprintBrowseMergeOnSwift' -v2"
+
+before_deploy:
+- docker run -it --rm --name build-browse-server -v "${PWD}/../":/ngeo-b/ --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 browse-server /bin/bash -c "yum update && yum install -y rpmdevtools && cd /ngeo-b/ && python setup.py bdist_rpm"
+
+deploy:
+  provider: releases
+  api_key:
+    secure: QPKKSL6Vc5iN7zt1WtnTZ2CbHX4V5RzpLS9NkR+bUp+fTP24i7twt4J6c2yRjhE3IgSLwj08ESoe3yZW5HqKVB8WhMd8+E/vfkekbllIU74i51hXSlpIS58xNtI8PkT9WE9eYIi90QEbN6es1YjhtBiPYI1WZXg3NC9TscffGfY=
+  file_glob: true
+  file: ../dist/*.rpm
+  skip_cleanup: true
+  draft: true
+  on:
+    tags: true
+
+notifications:
+  slack:
+    secure: axWg6MRTsvJByFcSG84Birbc3bNFWXnmmA45Rp/4IyBVklI3ytk0WmVx3Qqlf/vz2xfZHdRde4Je/Y+0ufioRY1e3fEl3J/IbcG1CeUcNPn5ghCmn8rJe+ptsFZQYY4uLsX9mWd74Q7xP12kxPQkRKHvpswYtmOhiYxZNEltcIk=
+© 2019 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About

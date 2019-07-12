@@ -8,6 +8,7 @@ ADD setup.cfg setup.py MANIFEST.in README.rst requirements.txt /opt/eoxserver/
 
 RUN apt-get update && \
   apt-get install -y \
+  apt-transport-https \
     python \
     python-pip \
     libpq-dev \

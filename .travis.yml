@@ -1,62 +1,39 @@
 language: python
 env:
-- DJANGO=">=1.4,<1.5" GDAL=1.10 DB=spatialite
-- DJANGO=">=1.5,<1.6" GDAL=1.10 DB=spatialite
-- DJANGO=">=1.6,<1.7" GDAL=1.10 DB=spatialite
-- DJANGO=">=1.7,<1.8" GDAL=1.10 DB=spatialite
-- DJANGO=">=1.8,<1.9" GDAL=1.10 DB=spatialite
+- DOCKER_COMPOSE_VERSION=">=1.8.0"
 python:
 - '2.7'
-services:
-- postgres
-virtualenv:
-  system_site_packages: true
 before_install:
-- sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-- sudo apt-get install aptitude
-- sudo aptitude install -y gdal-bin libxml2 python-lxml python-libxml2
-  libproj0 cgi-mapserver python-mapscript python-psycopg2 python-gdal
-- if [ "$DB" == "spatialite" ]; then wget https://pypi.python.org/packages/source/p/pysqlite/pysqlite-2.6.3.tar.gz;
-  fi
-- if [ "$DB" == "spatialite" ]; then tar xzf pysqlite-2.6.3.tar.gz; fi
-- if [ "$DB" == "spatialite" ]; then cd pysqlite-2.6.3; fi
-- if [ "$DB" == "spatialite" ]; then sed -i "/define=SQLITE_OMIT_LOAD_EXTENSION/c\#define=SQLITE_OMIT_LOAD_EXTENSION"
-  setup.cfg; fi
-- if [ "$DB" == "spatialite" ]; then sudo python setup.py install; fi
-- if [ "$DB" == "spatialite" ]; then cd -; fi
-- if [ "$DB" == "postgis" ]; then sudo psql postgres -tAc "CREATE USER eoxserver NOSUPERUSER
-  CREATEDB NOCREATEROLE ENCRYPTED PASSWORD 'eoxserver';"; fi
-- if [ "$DB" == "postgis" ]; then sudo -u postgres createdb eoxserver_testing; fi
-- if [ "$DB" == "postgis" ]; then sudo -u postgres psql eoxserver_testing -c 'create
-  extension postgis;'; fi
-install:
-- pip install "django${DJANGO}"
-- django-admin.py --version
-- pip install .
-- export XML_CATALOG_FILES="`pwd`/schemas/catalog.xml"
-- cd autotest
-- sed -e 's/#binary_raster_comparison_enabled=false/binary_raster_comparison_enabled=false/'
-  -i autotest/conf/eoxserver.conf
-- echo "disabled_tests=WCS20GetCoverageSubsetEPSG4326ResolutionInvalidAxisDatasetFaultTestCase,WCS20GetCoverageReferenceableDatasetGeogCRSSubsetTestCase,WCS20GetCoverageReferenceableDatasetGeogCRSSubsetExceedsExtentTestCase,WCS20GetCoverageOutputCRSotherUoMDatasetTestCase,WCS20GetCoverageJPEG2000TestCase,WCS20DescribeEOCoverageSetIncorrectSpatialSubsetFaultTestCase,WCS10DescribeCoverageMosaicTestCase,WCS10DescribeCoverageDatasetTestCase,WPS10ExecuteComplexDataTIFBase64InMemTestCase,WCS11GetCoverageBBoxFaultTestCase"
-  >> autotest/conf/eoxserver.conf
-script:
-- python -m eoxserver.services.ows.wps.test_data_types -v
-- python -m eoxserver.services.ows.wps.test_allowed_values -v
-- python manage.py test --pythonpath=../eoxserver/ core -v2
-- python manage.py test --pythonpath=../eoxserver/ backends -v2
-- python manage.py test --pythonpath=../eoxserver/ services -v2
-- python manage.py test --pythonpath=../eoxserver/resources coverages -v2
-- python manage.py test --pythonpath=../eoxserver/resources processes -v2
-- python manage.py test autotest_services -v2
-- python manage.py test autotest_coverages -v2
-after_failure:
-- for file in `ls autotest/responses/*` ; do  diff autotest/expected/`basename $file`
-  $file ; done
-notifications:
-  irc:
-    channels:
-    - irc.freenode.net#eoxserver
-    on_success: always
-    on_failure: always
-  slack:
-    secure: GPclHjLrLU2BsOS0OOHHm5vQp/GWk2sjCrHpqOVutakGbYMMRao45MHqajim+SypZcva8npIKGAHKTwny3vkvbHUJ7vpjtvRFEISLpvKKQxnq7FXJSc6hkvj+JTAaB+UpOZYyQXtchcLMizD2mST862r8gEKMo7UkbS1VOSjEm0=
+  - sudo apt-get update
+# Now we can install the newer docker-engine which is required for the newer
+  # docker-composer we will install next. The messy options are to force it to
+  # be non-interactive (normally it asks you a bunch of config questions).
+  - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
+# Print out the current docker-compose version. Once this reports 1.6+ then we
+  # do not need the following steps.
+  - docker-compose --version
+# As of the writing of this script Travis has docker-compose v1.4.2, we need
+  # to update it to 1.8+. $DOCKER_COMPOSE_VERSION is provide from the `env`
+  # above.
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L 
+https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+# Check that docker-compose is now running the latest version (or at least the
+  # one we specified). This is not to be confused with the version we printed
+  # before doing the update.
+  - docker-compose --version
+# Setup your application stack. You may need to tweak these commands if you
+  # doing out-of-the-ordinary docker-compose builds.
+  - docker-compose pull
+  - docker-compose build
+  - docker-compose start
+# You will want this for logging. If one of your containers does not build for
+  # whatever reason it's best to report that now before your tests start
+  # otherwise it can be really tricky to debug why tests are failing sometimes.
+  - docker ps
+# This is just our script to setup all the database tables and other fixtures
+  # we need. You should remove this if it's not necessary or you have other
+  # scripts handling this.
+  - docker/web/provision.sh

@@ -23,7 +23,7 @@ before_install:
 
 script:
 - docker-compose up -d
-- docker-compose exec eoxserver /bin/bash -c " python /opt/instance/make_fixtures.sh && python /opt/instance/manage.py test 'control|IngestModelInGeotiffBrowseOnSwift,SeedModelInGeotiffBrowseOnSwift,IngestFootprintBrowseReplaceOnSwift,IngestFootprintBrowseMergeOnSwift' -v2"
+- docker-compose exec eoxserver /bin/bash -c " python /opt/instance/make_fixtures.sh"
 # before_deploy:
 # - docker run -it --rm --name build-eoxserver -v "${PWD}/../":/opt/instance --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 eoxserver /bin/bash -c "yum update && yum install -y rpmdevtools && cd /opt/instance/ && python setup.py bdist_rpm"
 

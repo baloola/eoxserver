@@ -7,12 +7,11 @@ ADD tools /opt/eoxserver/tools
 ADD setup.cfg setup.py MANIFEST.in README.rst requirements.txt /opt/eoxserver/
 
 RUN apt-get -y update 
-RUN apt-get -y update && \ 
-  apt-get install -y \
+RUN apt-get -y install \
     python \
     python-pip \
     libpq-dev \
-  apt-get autoremove -y && \
+RUN apt-get -y autoremove && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/partial/* /tmp/* /var/tmp/*
 

@@ -11,7 +11,7 @@ services:
     # networks:
     #   - minerva-webnet
   autotest:
-    image: eoxserver 
+    image: 6b02c26ad084 
     environment:
       DB_USER: "user"
       DB_PW: "pw"

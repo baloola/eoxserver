@@ -6,8 +6,8 @@ ADD eoxserver /opt/eoxserver/eoxserver
 ADD tools /opt/eoxserver/tools
 ADD setup.cfg setup.py MANIFEST.in README.rst requirements.txt /opt/eoxserver/
 
-RUN apt-get -y update && \
-  apt-get install -y \
+RUN apt-get -y update 
+RUN apt-get install -y \
     python \
     python-pip \
     libpq-dev \

@@ -13,7 +13,7 @@ before_install:
 - docker build . -t eoxserver --add-host=browse:127.0.0.1
 
 script:
-- docker run -it --rm --name test-eoxserver -p 8081:80 -v "${PWD}/../eoxserver/":/usr/lib/python2.6/site-packages/eoxserver/ -v "${PWD}/../autotest/data/":/opt/instance/autotest/data/ -v "${PWD}/../autotest/logs/":/opt/instance/autotest/logs/ --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 eoxserver /bin/bash -c "/etc/init.d/postgresql start && sleep 5 && /etc/init.d/memcached start && echo \"TEST_RUNNER = 'eoxserver.testing.core.EOxServerTestRunner'\" >> /opt/instance/autotest/settings.py && python /opt/instance/manage.py test 'control|IngestModelInGeotiffBrowseOnSwift,SeedModelInGeotiffBrowseOnSwift,IngestFootprintBrowseReplaceOnSwift,IngestFootprintBrowseMergeOnSwift' -v2"
+- docker run -it --rm --name test-eoxserver -p 8081:80 -v "${PWD}/../eoxserver/":/usr/lib/python2.6/site-packages/eoxserver/ -v "${PWD}/../autotest/data/":/opt/instance/autotest/data/ -v "${PWD}/../autotest/logs/":/opt/instance/autotest/logs/ --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 eoxserver /bin/bash -c "echo \"TEST_RUNNER = 'eoxserver.testing.core.EOxServerTestRunner'\" >> /opt/instance/autotest/settings.py && python /opt/instance/manage.py test 'control|IngestModelInGeotiffBrowseOnSwift,SeedModelInGeotiffBrowseOnSwift,IngestFootprintBrowseReplaceOnSwift,IngestFootprintBrowseMergeOnSwift' -v2"
 before_deploy:
 - docker run -it --rm --name build-eoxserver -v "${PWD}/../":/opt/instance --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 eoxserver /bin/bash -c "yum update && yum install -y rpmdevtools && cd /opt/instance/ && python setup.py bdist_rpm"
 

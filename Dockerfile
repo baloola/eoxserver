@@ -10,8 +10,7 @@ RUN apt-get update && \
   apt-get install -y \
     python \
     python-pip \
-    libpq-dev \
-    python-mapscript && \
+    libpq-dev && \
   apt-get autoremove -y && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/partial/* /tmp/* /var/tmp/*

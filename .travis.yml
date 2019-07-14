@@ -1,5 +1,8 @@
 language: python
 
+env:
+- DOCKER_COMPOSE_VERSION=1.24.0
+
 python:
 - '2.7'
 
@@ -10,12 +13,19 @@ before_install:
 - sudo apt-get update
 
 - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-ce
+- docker-compose --version
+- sudo rm /usr/local/bin/docker-compose
+- curl -L https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-`uname -s`-`uname -m` > docker-compose
+- chmod +x docker-compose install.sh
+- sudo mv docker-compose /usr/local/bin
 - docker build . -t eoxserver --add-host=browse:127.0.0.1
+- cd autotest
 
 script:
-- docker run -it --rm --name test-eoxserver -p 8081:80 -v "${PWD}/../eoxserver/":/usr/lib/python2.6/site-packages/eoxserver/ -v "${PWD}/../autotest/data/":/opt/instance/autotest/data/ -v "${PWD}/../autotest/logs/":/opt/instance/autotest/logs/ --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 eoxserver /bin/bash -c "echo \"TEST_RUNNER = 'eoxserver.testing.core.EOxServerTestRunner'\" >> /opt/instance/autotest/settings.py && python /opt/instance/manage.py test 'control|IngestModelInGeotiffBrowseOnSwift,SeedModelInGeotiffBrowseOnSwift,IngestFootprintBrowseReplaceOnSwift,IngestFootprintBrowseMergeOnSwift' -v2"
-before_deploy:
-- docker run -it --rm --name build-eoxserver -v "${PWD}/../":/opt/instance --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 eoxserver /bin/bash -c "yum update && yum install -y rpmdevtools && cd /opt/instance/ && python setup.py bdist_rpm"
+- docker-compose up -d
+- docker-compose exec eoxserver /bin/bash -c " python /opt/instance/make_fixtures.sh && python /opt/instance/manage.py test 'control|IngestModelInGeotiffBrowseOnSwift,SeedModelInGeotiffBrowseOnSwift,IngestFootprintBrowseReplaceOnSwift,IngestFootprintBrowseMergeOnSwift' -v2"
+# before_deploy:
+# - docker run -it --rm --name build-eoxserver -v "${PWD}/../":/opt/instance --tmpfs /tmp:rw,exec,nosuid,nodev -h browse --add-host=browse:127.0.0.1 eoxserver /bin/bash -c "yum update && yum install -y rpmdevtools && cd /opt/instance/ && python setup.py bdist_rpm"
 
 deploy:
   provider: releases
